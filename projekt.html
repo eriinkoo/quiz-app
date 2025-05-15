@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kvízová hra</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #a735d4, #ec572a);
+            color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        #quiz-container {
+            background: rgba(31, 30, 30, 0.8);
+            padding: 100px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 800px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+        h1 {
+            font-size: 4.5rem;
+            margin-bottom: 50px;
+        }
+        h2 {
+            font-size: 1.3rem;
+            margin-bottom: 35px;
+        }
+        button {
+            background: #abdadd;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #ffffff;
+        }
+        #quiz, #result {
+            display: none;
+        }
+        #answers button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 25px;
+            background: #4da0ff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #answers button:hover {
+            background: #bcd9fa;
+        }
+        #score, #timer {
+            font-weight: bold;
+        }
+        .info {
+            margin: 20px 0;
+            font-size: 1.2rem;
+        }
+
+        .category-option {
+            cursor: pointer;
+            transition: transform 0.3s;
+            text-align: center;
+        }
+        .category-option img {
+            width: 100px;
+            height: 100px;
+        }
+        .category-option:hover {
+            transform: scale(1.1);
+        }
+        @media (max-width: 600px) {
+    h1 {
+        font-size: 2rem;
+    }
+    #quiz-container {
+        padding: 20px;
+    }
+    .category-option img {
+        width: 60px;
+        height: 60px;
+    }
+}   
+    </style>
+</head>
+<body>
+    <div id="quiz-container">
+        <h1>Kvízová hra</h1>
+
+        <div id="category-selection">
+            <h2>Vyber kategóriu:</h2>
+            <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+                <div class="category-option" onclick="startQuiz('matematika')">
+                    <img src="https://img.icons8.com/ios-filled/100/ffffff/calculator.png" alt="Matematika">
+                    <p>Matematika</p>
+                </div>
+                <div class="category-option" onclick="startQuiz('prirodoveda')">
+                    <img src="https://img.icons8.com/ios-filled/100/ffffff/leaf.png" alt="Prírodoveda">
+                    <p>Prírodoveda</p>
+                </div>
+                <div class="category-option" onclick="startQuiz('historia')">
+                    <img src="https://img.icons8.com/ios-filled/100/ffffff/greek-pillar.png" alt="História">
+                    <p>História</p>
+                </div>
+                <div class="category-option" onclick="startQuiz('filmy')">
+                    <img src="https://img.icons8.com/ios-filled/100/ffffff/film-reel.png" alt="Filmy">
+                    <p>Filmy</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="quiz">
+            <p id="question" class="info"></p>
+            <div id="answers"></div>
+            <button onclick="nextQuestion()">Ďalšia otázka</button>
+            <p class="info">Skóre: <span id="score">0</span> / <span id="total-questions">0</span></p>
+            <p class="info">Čas: <span id="timer">180</span> s</p>
+        </div>
+
+        <div id="result">
+            <h2>Výsledok</h2>
+            <p>Dosiahol si skóre: <span id="final-score"></span></p>
+            <button onclick="restartQuiz()">Hrať znova</button>
+        </div>
+    </div>
+    <iframe height="500" width="500" src="viedo.mp4" frameborder="0"></iframe>
+    <script>
+        let questions = {
+            "prirodoveda": [
+                { "question": "Aký je chemický symbol pre vodu?", "answers": ["H2O", "O2", "CO2", "NaCl"], "correct": "H2O" },
+                { "question": "Ktorá planéta je známa ako Červená planéta?", "answers": ["Mars", "Venuša", "Jupiter", "Saturn"], "correct": "Mars" },
+                { "question": "Koľko kostí má ľudské telo?", "answers": ["206", "208", "210", "212"], "correct": "206" },
+                { "question": "Aký je najväčší oceán na Zemi?", "answers": ["Tichý oceán", "Atlantický oceán", "Indický oceán", "Severný ľadový oceán"], "correct": "Tichý oceán" },
+                { "question": "Čo je fotosyntéza?", "answers": ["Dýchanie rastlín", "Rozklad pôdy", "Proces tvorby cukrov zo svetla", "Opaľovanie sa"], "correct": "Proces tvorby cukrov zo svetla" },
+                { "question": "Aká je normálna teplota ľudského tela?", "answers": ["36,6 °C", "37,5 °C", "35,8 °C", "38,0 °C"], "correct": "36,6 °C" },
+                { "question": "Ktorý plyn dýchame z atmosféry?", "answers": ["Dusík", "Kyslík", "Oxid uhličitý", "Vodík"], "correct": "Kyslík" },
+                { "question": "Ako sa volá najtvrdší prírodný materiál?", "answers": ["Žula", "Diamant", "Kremeň", "Oceľ"], "correct": "Diamant" },
+                { "question": "Ktorý orgán pumpuje krv v tele?", "answers": ["Mozog", "Pľúca", "Srdce", "Obličky"], "correct": "Srdce" },
+                { "question": "Čo spôsobuje striedanie ročných období?", "answers": ["Zemská os sa nakláňa", "Zmena gravitácie", "Zem mení tvar", "Zem sa otáča rýchlejšie"], "correct": "Zemská os sa nakláňa" },
+                { "question": "Ktorý prvok má chemickú značku Fe?", "answers": ["Zlato", "Striebro", "Železo", "Fluór"], "correct": "Železo" },
+                { "question": "Ako sa nazýva proces, pri ktorom sa kvapalina mení na plyn?", "answers": ["Kondenzácia", "Varenie", "Odparovanie", "Sublimácia"], "correct": "Odparovanie" },
+                { "question": "Ktorý orgán v tele filtruje krv?", "answers": ["Pečeň", "Obličky", "Srdce", "Pľúca"], "correct": "Obličky" },
+                { "question": "Ktorá časť rastliny vyrába potravu?", "answers": ["Koreň", "Kvet", "List", "Stonka"], "correct": "List" }
+            ],               
+
+            "matematika": [
+                { "question": "Koľko je 5 + 3?", "answers": ["6", "7", "8", "9"], "correct": "8" },
+                { "question": "Koľko je 12 × 2?", "answers": ["22", "24", "26", "28"], "correct": "24" },
+                { "question": "Aký je druhý mocninový koreň z 16?", "answers": ["2", "3", "4", "5"], "correct": "4" },
+                { "question": "Koľko je 100 ÷ 4?", "answers": ["20", "25", "30", "40"], "correct": "25" },
+                { "question": "Koľko je 15 + 8?", "answers": ["22", "23", "24", "25"], "correct": "23" },
+                { "question": "Koľko je 100 × 3?", "answers": ["200", "300", "400", "500"], "correct": "300" },
+                { "question": "Čo je výsledok 9 × 9?", "answers": ["81", "72", "90", "99"], "correct": "81" },
+                { "question": "Koľko je 7²?", "answers": ["49", "56", "63", "72"], "correct": "49" },
+                { "question": "Koľko je 14 - 5?", "answers": ["7", "8", "9", "10"], "correct": "9" },
+                { "question": "Koľko je 3 × 7?", "answers": ["20", "21", "22", "23"], "correct": "21" },
+                { "question": "Aký je tretí mocninový koreň z 27?", "answers": ["2", "3", "4", "5"], "correct": "3" },
+                { "question": "Koľko je 81 ÷ 9?", "answers": ["8", "9", "10", "11"], "correct": "9" },
+                { "question": "Koľko je 6 × 8?", "answers": ["46", "48", "50", "52"], "correct": "48" },
+                { "question": "Koľko je 20 % z 200?", "answers": ["20", "30", "40", "50"], "correct": "40" }
+            ],
+            "historia": [
+                { "question": "Kedy bola založená Veľká Morava?", "answers": ["833", "906", "711", "1241"], "correct": "833" },
+                { "question": "Kto objavil Ameriku?", "answers": ["Vasco da Gama", "Krištof Kolumbus", "Marco Polo", "James Cook"], "correct": "Krištof Kolumbus" },
+                { "question": "V ktorom roku začala 2. svetová vojna?", "answers": ["1914", "1939", "1945", "1950"], "correct": "1939" },
+                { "question": "Kto bol prvý prezident USA?", "answers": ["Abraham Lincoln", "George Washington", "Thomas Jefferson", "John Adams"], "correct": "George Washington" },
+                { "question": "Kedy bola bitka pri Waterloo?", "answers": ["1812", "1814", "1815", "1817"], "correct": "1815" },
+                { "question": "V ktorom roku padol Rím?", "answers": ["476", "395", "410", "451"], "correct": "476" },
+                { "question": "Kto bol prvým cisárom Rímskej ríše?", "answers": ["Augustus", "Nero", "Trajan", "Julius Caesar"], "correct": "Augustus" },
+                { "question": "Kedy sa začala francúzska revolúcia?", "answers": ["1776", "1789", "1799", "1804"], "correct": "1789" },
+                { "question": "Kedy bola podpísaná Magna Charta?", "answers": ["1215", "1315", "1415", "1515"], "correct": "1215" },
+                { "question": "Kto bol zakladateľ Rímskej ríše?", "answers": ["Romulus", "Remus", "Augustus", "Julius Caesar"], "correct": "Augustus" },
+                { "question": "Kedy bola objavená Austrália Jamesom Cookom?", "answers": ["1770", "1788", "1800", "1812"], "correct": "1770" },
+                { "question": "V ktorom roku začala 1. svetová vojna?", "answers": ["1914", "1918", "1920", "1939"], "correct": "1914" },
+                { "question": "Kto bol kráľom počas anglickej priemyselnej revolúcie?", "answers": ["George III", "Henry VIII", "Edward VII", "Charles I"], "correct": "George III" }
+            ],
+            "filmy": [
+                { "question": "Kto režíroval film Titanic?", "answers": ["Steven Spielberg", "James Cameron", "Christopher Nolan", "Quentin Tarantino"], "correct": "James Cameron" },
+                { "question": "V ktorom roku vyšiel prvý film o Harrym Potterovi?", "answers": ["1999", "2001", "2003", "2005"], "correct": "2001" },
+                { "question": "Ako sa volá hlavná postava filmu Pán prsteňov?", "answers": ["Harry Potter", "Frodo Baggins", "Aragorn", "Gandalf"], "correct": "Frodo Baggins" },
+                { "question": "Ktorý herec hral Iron Mana v Marvel filmoch?", "answers": ["Chris Hemsworth", "Robert Downey Jr.", "Chris Evans", "Mark Ruffalo"], "correct": "Robert Downey Jr." },
+                { "question": "Aký film režíroval Quentin Tarantino v 1994?", "answers": ["Pulp Fiction", "Inglorious Bastards", "Kill Bill", "Django Unchained"], "correct": "Pulp Fiction" },
+                { "question": "V ktorom filme účinkuje postava Forrest Gump?", "answers": ["Forrest Gump", "Cast Away", "Green Mile", "Big"], "correct": "Forrest Gump" },
+                { "question": "Ako sa volá kráľ levov vo filme Leví kráľ?", "answers": ["Simba", "Mufasa", "Scar", "Rafiki"], "correct": "Mufasa" },
+                { "question": "V ktorom filme hrá postava menom Joker?", "answers": ["The Dark Knight", "Joker", "Suicide Squad", "Justice League"], "correct": "Joker" },
+                { "question": "Kto režíroval film Počiatok (Inception)?", "answers": ["Christopher Nolan", "James Cameron", "Steven Spielberg", "Peter Jackson"], "correct": "Christopher Nolan" },
+                { "question": "Ako sa volá hlavná ženská postava v Avatare?", "answers": ["Neytiri", "Gamora", "Leeloo", "Moana"], "correct": "Neytiri" },
+                { "question": "Ktorý film získal Oscara za najlepší film v roku 2020?", "answers": ["1917", "Joker", "Parasite", "Once Upon a Time in Hollywood"], "correct": "Parasite" },
+                { "question": "V ktorom filme sa objavil hrdina menom Jack Sparrow?", "answers": ["Pirates of the Caribbean", "Titanic", "The Revenant", "Gladiator"], "correct": "Pirates of the Caribbean" },
+                { "question": "Kto hral hlavného hrdinu vo filme Gladiátor?", "answers": ["Russell Crowe", "Brad Pitt", "Tom Hanks", "Leonardo DiCaprio"], "correct": "Russell Crowe" }
+            ]
+        };
+
+        let currentCategory = "";
+        let questionPool = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timer;
+        let timeLeft = 180;
+
+        function startQuiz(category) {
+            currentCategory = category;
+            questionPool = [...questions[category]];
+            currentQuestionIndex = 0;
+            score = 0;
+            timeLeft = 180;
+            document.getElementById("total-questions").innerText = questionPool.length;
+            document.getElementById("category-selection").style.display = "none";
+            document.getElementById("quiz").style.display = "block";
+            loadQuestion();
+            startTimer();
+        }
+
+        function loadQuestion() {
+            const questionData = questionPool[currentQuestionIndex];
+            document.getElementById("question").innerText = questionData.question;
+            let answersHtml = "";
+            questionData.answers.forEach(answer => {
+                answersHtml += `<button onclick="checkAnswer('${answer}')">${answer}</button>`;
+            });
+            document.getElementById("answers").innerHTML = answersHtml;
+        }
+
+        function checkAnswer(answer) {
+            if (answer === questionPool[currentQuestionIndex].correct) {
+                score++;
+                document.getElementById("score").innerText = score;
+            }
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questionPool.length) {
+                loadQuestion();
+            } else {
+                endQuiz();
+            }
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer").innerText = timeLeft;
+                if (timeLeft === 0) {
+                    clearInterval(timer);
+                    endQuiz();
+                }
+            }, 1000);
+        }
+
+        function endQuiz() {
+            clearInterval(timer);
+            document.getElementById("quiz").style.display = "none";
+            document.getElementById("result").style.display = "block";
+            document.getElementById("final-score").innerText = score + " / " + questionPool.length;
+        }
+
+        function restartQuiz() {
+            document.getElementById("result").style.display = "none";
+            document.getElementById("category-selection").style.display = "block";
+        }
+    </script>
+</body>
+</html>
